@@ -34,25 +34,34 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom CSS to make chat container bigger
+# Custom CSS with UI improvements
 st.markdown("""
 <style>
-    /* Make the chat input box larger */
-    .stChatInput {
-        padding: 1rem 0;
+    /*
+    MODIFICATION: The following CSS rules have been adjusted to improve the UI based on your request.
+    1. The chat input box is now taller for easier multi-line input.
+    2. The large gap between the 'Ask Questions' title and the chat input (when no messages are present) has been removed.
+    */
+
+    /* Make the text area within the chat input box taller */
+    .stChatInput > div > textarea {
+        min-height: 6rem; /* You can adjust this value for desired height */
     }
 
-    /* Reduce gap between title and chat messages */
+    /* Reduce gap between title and the chat area */
+    /* This rule was already present and is effective. */
     .element-container:has(h3) {
         margin-bottom: 0.5rem !important;
     }
 
-    /* Make chat messages container taller */
-    .stChatMessageContainer {
-        min-height: 400px;
-    }
+    /*
+    The previous rule for .stChatMessageContainer which set a 'min-height: 400px' has been removed.
+    This was causing the large empty space. By removing it, the container will only take up space
+    when chat messages are actually present.
+    */
 </style>
 """, unsafe_allow_html=True)
+
 
 @st.cache_resource
 def load_llm():
