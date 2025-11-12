@@ -34,6 +34,26 @@ st.set_page_config(
     layout="wide"
 )
 
+# Custom CSS to make chat container bigger
+st.markdown("""
+<style>
+    /* Make the chat input box larger */
+    .stChatInput {
+        padding: 1rem 0;
+    }
+
+    /* Reduce gap between title and chat messages */
+    .element-container:has(h3) {
+        margin-bottom: 0.5rem !important;
+    }
+
+    /* Make chat messages container taller */
+    .stChatMessageContainer {
+        min-height: 400px;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 @st.cache_resource
 def load_llm():
     """Load and cache the LLM model"""
@@ -145,18 +165,15 @@ def main():
 
     st.markdown("---")
 
-    # Chat interface
-    st.subheader("💬 Ask Questions")
+    # Chat interface - removed the subheader to reduce gap
+    st.markdown("### 💬 Ask Questions")
 
-    # Display chat messages in a container for better sizing
-    chat_container = st.container()
+    # Display chat messages
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
 
-    with chat_container:
-        for message in st.session_state.messages:
-            with st.chat_message(message["role"]):
-                st.markdown(message["content"])
-
-    # Chat input - larger and more prominent
+    # Chat input - right after messages with minimal gap
     prompt = st.chat_input("Ask a question about your documents...", key="chat_input")
 
     if prompt:
