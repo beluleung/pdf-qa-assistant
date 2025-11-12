@@ -4,11 +4,15 @@ An AI-powered question-answering system for PDF documents using LangChain and St
 
 ## Features
 
-- 📄 Upload and process multiple PDF files
-- 🔍 Semantic search across documents
-- 💬 Interactive chat interface
-- 📖 Source citation for transparency
-- 🚀 Fast vector-based retrieval using FAISS
+## Features
+
+- 📄 Pre-loaded knowledge base (13.1MB MasterCard documents)
+- 📤 Upload and process additional PDF files
+- 🔍 Semantic search across documents using FAISS vector store
+- 💬 Interactive chat interface with conversation history
+- 📖 Source citation with expandable document references
+- 🚀 Fast vector-based retrieval
+- ⚡ Automatic vectorstore loading on startup
 
 ## Installation
 
