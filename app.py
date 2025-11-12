@@ -14,6 +14,19 @@ from pdf_processor import PDFProcessor
 from transformers import pipeline, AutoTokenizer, AutoModelForCausalLM
 import torch
 
+# Initialize session state
+if 'vectorstore' not in st.session_state:
+    st.session_state.vectorstore = None
+if 'messages' not in st.session_state:
+    st.session_state.messages = []
+
+# Auto-load pre-built vectorstore on startup
+if st.session_state.vectorstore is None:
+    processor = PDFProcessor()
+    vectorstore = processor.load_vectorstore()
+    if vectorstore:
+        st.session_state.vectorstore = vectorstore
+
 # Page config
 st.set_page_config(
     page_title="PDF Q&A Assistant",
@@ -64,23 +77,25 @@ def main():
     processor = initialize_processor()
 
     # Sidebar for PDF management
-    with st.sidebar:
-        st.header("📄 Document Management")
+with st.sidebar:
+    st.header("📄 Document Management")
 
-        # Check for pre-loaded PDFs
-        if st.button("🔄 Load PDFs from 'pdfs' folder"):
-            with st.spinner("Loading PDFs..."):
-                documents = processor.load_pdfs_from_folder("pdfs")
-                if documents:
-                    vectorstore = processor.create_vectorstore(documents)
-                    if vectorstore:
-                        processor.save_vectorstore(vectorstore)
-                        st.session_state.vectorstore = vectorstore
-                        st.success(f"Loaded {len(documents)} document chunks!")
-                else:
-                    st.warning("No documents found or processed.")
+    # Show knowledge base status
+    if st.session_state.vectorstore:
+        st.success("✅ Knowledge base loaded and ready!")
+        st.info("📚 13.1MB of documents pre-loaded")
+        st.caption("You can start asking questions immediately")
+    else:
+        st.error("❌ Knowledge base not found")
+        st.warning("Please contact the administrator")
 
-        st.markdown("---")
+    st.markdown("---")
+
+    # Optional: Show loaded documents info
+    with st.expander("ℹ️ About the Documents"):
+        st.write("This assistant has been pre-trained with:")
+        st.write("- [List your PDF topics here]")
+        st.write("- Total size: 13.1MB")
 
         # Upload additional PDFs
         st.subheader("Upload Additional PDFs")
@@ -190,11 +205,12 @@ def main():
         else:
             st.warning("❌ No documents loaded")
 
-        st.markdown("---")
-        st.markdown("**Instructions:**")
-        st.markdown("1. Load PDFs from 'pdfs' folder OR upload new PDFs")
-        st.markdown("2. Ask questions about the content")
-        st.markdown("3. View sources for transparency")
+st.markdown("---")
+st.markdown("**How to Use:**")
+st.markdown("1. 📚 MasterCard PDFs are pre-loaded and ready")
+st.markdown("2. 💬 Type your question in the chat box below")
+st.markdown("3. 📖 Expand 'Sources' to see document references")
+st.markdown("4. 🔄 Ask follow-up questions anytime")
 
 if __name__ == "__main__":
     main()

@@ -41,13 +41,13 @@ ENV/
 temp.pdf
 *.tmp
 
-# Vector store (too large for git)
-vectorstore/
+# ALLOW vectorstore (comment out the line below)
+# vectorstore/
 
-# PDF files (don't upload user documents)
-pdfs/*.pdf
+# ALLOW PDFs (comment out the line below)
+# pdfs/*.pdf
 
-# Keep the pdfs folder but not its contents
+# Keep the pdfs folder
 !pdfs/.gitkeep
 
 # Cache
