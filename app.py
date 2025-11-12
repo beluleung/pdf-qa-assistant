@@ -70,13 +70,10 @@ def initialize_processor():
     return PDFProcessor()
 
 def main():
-    st.title("📚 PDF Q&A Assistant")
-    st.markdown("Ask questions about your PDF documents using AI!")
-
     # Initialize components
     processor = initialize_processor()
 
-    # Sidebar for PDF management
+    # Left Sidebar for PDF management
     with st.sidebar:
         st.header("📄 Document Management")
 
@@ -133,68 +130,121 @@ def main():
                         processor.save_vectorstore(st.session_state.vectorstore)
                         st.success(f"Added {len(new_documents)} new document chunks!")
 
+    # Main content area - Title at the very top
+    st.title("📚 PDF Q&A Assistant")
+    st.markdown("Ask questions about your PDF documents using AI!")
+    st.markdown("---")
+
+    # Three column layout: chat takes most space, instructions on the right
+    col1, col2 = st.columns([3, 1])
+
+    with col1:
+        # Chat interface
+        st.subheader("💬 Ask Questions")
+
+        # Display chat messages in a container for better sizing
+        chat_container = st.container()
+
+        with chat_container:
+            for message in st.session_state.messages:
+                with st.chat_message(message["role"]):
+                    st.markdown(message["content"])
+
+        # Chat input - larger and more prominent
+        prompt = st.chat_input("Ask a question about your documents...", key="chat_input")
+
+        if prompt:
+            # Check if vectorstore exists
+            if st.session_state.vectorstore is None:
+                # Try to load existing vectorstore
+                vectorstore = processor.load_vectorstore()
+                if vectorstore:
+                    st.session_state.vectorstore = vectorstore
+                else:
+                    st.error("No documents loaded! Please load PDFs first.")
+                    st.stop()
+
+            # Add user message to chat history
+            st.session_state.messages.append({"role": "user", "content": prompt})
+
+            # Rerun to show the new message
+            st.rerun()
+
+        # Process the last message if it's from the user
+        if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
+            last_message = st.session_state.messages[-1]["content"]
+
+            # Generate response
+            with st.chat_message("assistant"):
+                with st.spinner("Thinking..."):
+                    try:
+                        # Search for relevant documents
+                        retriever = st.session_state.vectorstore.as_retriever(
+                            search_kwargs={"k": 3}
+                        )
+                        relevant_docs = retriever.invoke(last_message)
+
+                        # Create context from relevant documents
+                        context = "\n\n".join([doc.page_content for doc in relevant_docs])
+
+                        # Simple response generation without complex LLM for now
+                        response = f"Based on the documents, here's what I found:\n\n{context[:1000]}..."
+
+                        st.markdown(response)
+                        st.session_state.messages.append({"role": "assistant", "content": response})
+
+                        # Show sources
+                        with st.expander("📖 Sources"):
+                            for i, doc in enumerate(relevant_docs, 1):
+                                st.markdown(f"**Source {i}:**")
+                                st.markdown(doc.page_content[:300] + "...")
+                                if i < len(relevant_docs):
+                                    st.markdown("---")
+
+                    except Exception as e:
+                        error_msg = f"Error generating response: {str(e)}"
+                        st.error(error_msg)
+                        st.session_state.messages.append({"role": "assistant", "content": error_msg})
+
+    with col2:
+        # Right sidebar with instructions
+        st.markdown("### 📋 How to Use")
+        st.markdown("""
+        **Getting Started:**
+
+        1. 📚 **Documents Ready**
+           - MasterCard PDFs are pre-loaded
+
+        2. 💬 **Ask Questions**
+           - Type your question in the chat box
+           - Be specific for better answers
+
+        3. 📖 **Check Sources**
+           - Expand "Sources" to see references
+           - Verify the information
+
+        4. 🔄 **Follow-up**
+           - Ask follow-up questions anytime
+           - Build on previous answers
+
+        ---
+
+        **Tips:**
+        - Ask clear, specific questions
+        - Use keywords from your documents
+        - Check sources for accuracy
+        """)
+
+        # System status
         st.markdown("---")
-        st.markdown("**How to Use:**")
-        st.markdown("1. 📚 MasterCard PDFs are pre-loaded and ready")
-        st.markdown("2. 💬 Type your question in the chat box")
-        st.markdown("3. 📖 Expand 'Sources' to see document references")
-        st.markdown("4. 🔄 Ask follow-up questions anytime")
-
-    # Main chat interface
-    st.subheader("💬 Ask Questions")
-
-    # Display chat messages
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
-
-    # Chat input
-    if prompt := st.chat_input("Ask a question about your documents..."):
-        # Check if vectorstore exists
-        if st.session_state.vectorstore is None:
-            # Try to load existing vectorstore
-            vectorstore = processor.load_vectorstore()
-            if vectorstore:
-                st.session_state.vectorstore = vectorstore
-            else:
-                st.error("No documents loaded! Please load PDFs first.")
-                st.stop()
-
-        # Add user message to chat history
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
-
-        # Generate response
-        with st.chat_message("assistant"):
-            with st.spinner("Thinking..."):
-                try:
-                    # Search for relevant documents
-                    retriever = st.session_state.vectorstore.as_retriever(
-                        search_kwargs={"k": 3}
-                    )
-                    relevant_docs = retriever.invoke(prompt)
-
-                    # Create context from relevant documents
-                    context = "\n\n".join([doc.page_content for doc in relevant_docs])
-
-                    # Simple response generation without complex LLM for now
-                    response = f"Based on the documents, here's what I found:\n\n{context[:1000]}..."
-
-                    st.markdown(response)
-                    st.session_state.messages.append({"role": "assistant", "content": response})
-
-                    # Show sources
-                    with st.expander("📖 Sources"):
-                        for i, doc in enumerate(relevant_docs, 1):
-                            st.markdown(f"**Source {i}:**")
-                            st.markdown(doc.page_content[:300] + "...")
-                            st.markdown("---")
-
-                except Exception as e:
-                    error_msg = f"Error generating response: {str(e)}"
-                    st.error(error_msg)
-                    st.session_state.messages.append({"role": "assistant", "content": error_msg})
+        st.markdown("### ⚙️ System Status")
+        if st.session_state.vectorstore:
+            st.success("✅ Ready")
+            # Get document count
+            doc_count = st.session_state.vectorstore.index.ntotal
+            st.metric("Document Chunks", doc_count)
+        else:
+            st.error("❌ Not Ready")
 
 if __name__ == "__main__":
     main()
