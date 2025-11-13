@@ -34,34 +34,58 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom CSS with UI improvements
+# Custom CSS to improve chat UI (enhanced to fully remove gap between title and chat input)
 st.markdown("""
 <style>
-    /*
-    MODIFICATION: The following CSS rules have been adjusted to improve the UI based on your request.
-    1. The chat input box is now taller for easier multi-line input.
-    2. The large gap between the 'Ask Questions' title and the chat input (when no messages are present) has been removed.
-    */
+    /* Remove large gaps globally */
+    .element-container {
+        margin-bottom: 0 !important;
+        padding-bottom: 0 !important;
+    }
 
-    /* Make the text area within the chat input box taller */
+    /* Reduce gap specifically after h3 - remove gap before chat input */
+    h3 {
+        margin-bottom: 0 !important;
+        margin-top: 0.5rem !important;
+        padding-bottom: 0 !important;
+    }
+
+    /* Remove gap after h3 element container and markdown container */
+    .element-container:has(h3),
+    [data-testid="stMarkdownContainer"] {
+        margin-bottom: 0 !important;
+        padding-bottom: 0 !important;
+    }
+
+    /* Make chat messages container much taller */
+    [data-testid="stChatMessageContainer"] {
+        min-height: 600px !important;
+        max-height: 600px !important;
+        overflow-y: auto;
+        margin-bottom: 0 !important;
+    }
+
+    /* Make chat input much bigger */
     .stChatInput > div > textarea {
-        min-height: 6rem; /* You can adjust this value for desired height */
+        min-height: 5rem !important;
+        font-size: 1rem !important;
+        padding: 1rem !important;
     }
 
-    /* Reduce gap between title and the chat area */
-    /* This rule was already present and is effective. */
-    .element-container:has(h3) {
-        margin-bottom: 0.5rem !important;
+    /* Reduce padding between chat messages and input (force zero top margin) */
+    .stChatInput {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
     }
 
-    /*
-    The previous rule for .stChatMessageContainer which set a 'min-height: 400px' has been removed.
-    This was causing the large empty space. By removing it, the container will only take up space
-    when chat messages are actually present.
-    */
+    /* Remove gap between title and chat input area */
+    div[data-testid="stVerticalBlock"]:has([data-testid="stChatInput"]) {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+        margin-bottom: 0 !important;
+    }
 </style>
 """, unsafe_allow_html=True)
-
 
 @st.cache_resource
 def load_llm():
@@ -159,11 +183,11 @@ def main():
                         processor.save_vectorstore(st.session_state.vectorstore)
                         st.success(f"Added {len(new_documents)} new document chunks!")
 
-    # Main content area - Title at the very top
+    # Main content area
     st.title("📚 PDF Q&A Assistant")
     st.markdown("Ask questions about your PDF documents using AI!")
 
-    # How to Use - right below the subtitle
+    # How to Use
     st.markdown("""
     **📋 How to Use:**
     1. 📚 MasterCard PDFs are pre-loaded and ready
@@ -174,16 +198,18 @@ def main():
 
     st.markdown("---")
 
-    # Chat interface - removed the subheader to reduce gap
-    st.markdown("### 💬 Ask Questions")
+    # Chat interface with wrapper container to minimize spacing
+    with st.container():
+        # Chat interface header with zero bottom margin
+        st.markdown("### 💬 Ask Questions")
 
-    # Display chat messages
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+        # Display chat messages
+        for message in st.session_state.messages:
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
 
-    # Chat input - right after messages with minimal gap
-    prompt = st.chat_input("Ask a question about your documents...", key="chat_input")
+        # Chat input - immediately after messages with zero gap
+        prompt = st.chat_input("Ask a question about your documents...", key="chat_input")
 
     if prompt:
         # Check if vectorstore exists

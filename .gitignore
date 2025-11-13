@@ -50,6 +50,6 @@ temp.pdf
 # Keep the pdfs folder
 !pdfs/.gitkeep
 
-# Cache
-.cache/
-*.pyc
+# Ignore vectorstore files (user uploads)
+vectorstore/
+temp.pdf
